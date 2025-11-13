@@ -1,25 +1,25 @@
 name: Migrate to Target
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Fetch Latest Code"]
+    types:
+      - completed
     branches:
-      - main
-    paths-ignore:
-      - README.md
-      - Contributing.md
-      - .github/**
-      - '**/*.whl'
+      - feature/*
   workflow_dispatch:
     inputs:
       branch:
         description: "Branch to deploy"
         required: true
-        default: "main"
+        default: "feature/"
 
 jobs:
   migrate_to_target:
     name: Migration to Target
     runs-on: ubuntu-latest
+    # Only run if the workflow_run was successful (or if manually triggered)
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     env:
       SOURCE_HOST_URL: ${{ secrets.SOURCE_HOST_URL }}
       SOURCE_TOKEN: ${{ secrets.SOURCE_TOKEN }}
@@ -34,7 +34,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || 'main' }}
+          ref: ${{ github.event.inputs.branch || github.event.workflow_run.head_branch || github.ref_name }}
 
       - name: Install dependencies
         run: |

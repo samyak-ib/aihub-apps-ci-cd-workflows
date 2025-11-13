@@ -5,13 +5,13 @@ on:
     types:
       - opened
     branches:
-      - main
+      - feature/*
   workflow_dispatch:
     inputs:
       branch:
         description: "Branch to run regression suite"
         required: true
-        default: "main"
+        default: "feature/"
 
 jobs:
   regression_suite:
@@ -55,7 +55,7 @@ jobs:
             pipx install cicd_aihub-${VERSION}-py3-none-any.whl
           else
             echo "No local .whl file found. Attempting to install from GitHub release."
-            LATEST_RELEASE=$(curl -s https://api.github.com/repos/instabase/aihub-apps-ci-cd-workflows/releases/latest | jq -r .tag_name)
+            LATEST_RELEASE=$(curl --cert ${{ secrets.CERTIFICATE }} -s https://api.github.com/repos/instabase/aihub-apps-ci-cd-workflows/releases/latest | jq -r .tag_name)
             VERSION=$(echo $LATEST_RELEASE | sed 's/^v//')
             
             if ! pipx install https://github.com/instabase/aihub-apps-ci-cd-workflows/releases/download/${LATEST_RELEASE}/cicd_aihub-${VERSION}-py3-none-any.whl; then
